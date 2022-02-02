@@ -26,34 +26,33 @@ module SpreeSitemap::SpreeDefaults
   end
 
   def add_products(options = {})
-      begin
-        active_products = Spree::Product.select(:id, :slug, :updated_at).active.distinct
+    begin
+      active_products = Spree::Product.select(:id, :slug, :updated_at).active.distinct
 
-        @@product_idx ||= 1
-        @@cur_product_id ||= 1
-        if @@cur_product_id <= 1
-          add(products_path, options.merge(lastmod: active_products.last_updated))
-        end
-
-        active_products.find_in_batches(batch_size: 2500, start: @@cur_product_id) do |products|
-          products.each do |product|
-            add_product(product, options)
-
-            f.puts(product_path(product))
-
-            @@product_idx += 1
-          end
-
-          @@cur_product_id = products.last.id
-        end
-
-        @@cur_product_id = 1
-      rescue ActiveRecord::ActiveRecordError => e
-        ActiveRecord::Base.connection.reconnect!
-        sleep 5
-
-        retry
+      @@product_idx ||= 1
+      @@cur_product_id ||= 1
+      if @@cur_product_id <= 1
+        add(products_path, options.merge(lastmod: active_products.last_updated))
       end
+
+      active_products.find_in_batches(batch_size: 2500, start: @@cur_product_id) do |products|
+        products.each do |product|
+          add_product(product, options)
+
+          f.puts(product_path(product))
+
+          @@product_idx += 1
+        end
+
+        @@cur_product_id = products.last.id
+      end
+
+      @@cur_product_id = 1
+    rescue ActiveRecord::ActiveRecordError => e
+      ActiveRecord::Base.connection.reconnect!
+      sleep 5
+
+      retry
     end
   end
 
