@@ -39,8 +39,6 @@ module SpreeSitemap::SpreeDefaults
         products.each do |product|
           add_product(product, options)
 
-          f.puts(product_path(product))
-
           @@product_idx += 1
         end
 
@@ -88,8 +86,11 @@ module SpreeSitemap::SpreeDefaults
   end
 
   def add_taxon(taxon, options = {})
-    add(nested_taxons_path(taxon.permalink), options.merge(lastmod: taxon.products.last_updated)) if taxon.permalink.present?
-    taxon.children.each { |child| add_taxon(child, options) }
+    taxon.self_and_descendants.each do |t|
+      add(nested_taxons_path(t.permalink), options.merge(lastmod: t.updated_at)) if taxon.permalink.present?
+    end
+    # add(nested_taxons_path(taxon.permalink), options.merge(lastmod: taxon.products.last_updated)) if taxon.permalink.present?
+    # taxon.children.each { |child| add_taxon(child, options) }
   end
 
   def gem_available?(name)
