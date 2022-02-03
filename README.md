@@ -18,7 +18,11 @@ Spree Sitemap is a sitemap generator based on the [sitemap_generator][1] gem. It
 
 ### Configuration Options
 
-Check out the [README][1] for the [sitemap_generator][1].
+By default this gem will serve sitemap files directly from your own domain, you can override the default action by adding the following content to  config/initializers/spree_sitemap.rb
+
+::SpreeSitemap.serve_directly = false
+
+For other options, please check out the [README][1] for the [sitemap_generator][1].
 
 ---
 
