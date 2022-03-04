@@ -39,8 +39,6 @@ class SitemapJob < ApplicationJob
         next
       end
 
-      puts "#{index_url}"
-
       sitemap_name = begin
         uri = URI(index_url)
         uri.path.sub('/', '')
@@ -48,14 +46,11 @@ class SitemapJob < ApplicationJob
         nil
       end
 
-      puts "#{sitemap_name}"
-
       if sitemap_name.blank?
         next
       end
 
       sitemap_path = SitemapGenerator::Sitemap.public_path + sitemap_name
-      puts "#{sitemap_path}"
       unless File.exist?(sitemap_path)
         next
       end
