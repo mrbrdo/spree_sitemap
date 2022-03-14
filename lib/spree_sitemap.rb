@@ -6,8 +6,19 @@ require 'spree_extension'
 
 module SpreeSitemap
   @serve_directly = true
+  @robots = <<-ROBOT
+# See http://www.robotstxt.org/robotstxt.html for documentation on how to use the robots.txt file
+User-agent: *
+Disallow: /checkout
+Disallow: /cart
+Disallow: /orders
+Disallow: /user
+Disallow: /account
+Disallow: /api
+Disallow: /password
+  ROBOT
 
   class << self
-    attr_accessor :serve_directly
+    attr_accessor :serve_directly, :robots
   end
 end
