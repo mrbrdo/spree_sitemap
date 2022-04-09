@@ -39,26 +39,35 @@ class SitemapJob < ApplicationJob
         next
       end
 
-      sitemap_name = begin
-        uri = URI(index_url)
-        uri.path.sub('/', '')
-      rescue
-        nil
-      end
-
-      if sitemap_name.blank?
-        next
-      end
-
-      sitemap_path = SitemapGenerator::Sitemap.public_path + sitemap_name
-      unless File.exist?(sitemap_path)
-        next
-      end
-
       service = ActiveStorage::Blob.service
-      file = File.open(sitemap_path)
-      key = File.basename(sitemap_name.gsub('/', '-'))
-      service.upload(key, file)
+
+      sitemaps_path = SitemapGenerator::Sitemap.sitemaps_path
+      SitemapGenerator::Sitemap.public_path.glob(File.join(sitemaps_path, 'sitemap*.xml*')).each do |pn|
+        sitemap_path = pn.to_s
+        sitemap_key = "#{sitemaps_path}#{pn.basename.to_s}".gsub('/', '-')
+        service.upload(sitemap_key, File.open(sitemap_path))
+      end
+
+      # sitemap_name = begin
+      #   uri = URI(index_url)
+      #   uri.path.sub('/', '')
+      # rescue
+      #   nil
+      # end
+
+      # if sitemap_name.blank?
+      #   next
+      # end
+
+      # sitemap_path = SitemapGenerator::Sitemap.public_path + sitemap_name
+      # unless File.exist?(sitemap_path)
+      #   next
+      # end
+
+      # service = ActiveStorage::Blob.service
+      # file = File.open(sitemap_path)
+      # key = File.basename(sitemap_name.gsub('/', '-'))
+      # service.upload(key, file)
 
       SitemapGenerator::Sitemap.ping_search_engines
     end

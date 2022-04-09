@@ -7,7 +7,7 @@ module SpreeSitemap
     config.autoload_paths += %W(#{config.root}/lib)
 
     def self.activate
-      Spree::Product.class_eval do
+      ::Spree::Product.class_eval do
         def self.last_updated
           last_update = order('spree_products.updated_at DESC').first
           last_update.try(:updated_at)
@@ -18,6 +18,10 @@ module SpreeSitemap
       SitemapGenerator::Interpreter.send :include, SpreeSitemap::SpreeDefaults
       if defined? SitemapGenerator::LinkSet
         SitemapGenerator::LinkSet.send :include, SpreeSitemap::SpreeDefaults
+      end
+
+      Dir.glob(File.join(File.dirname(__FILE__), '../../app/**/*_decorator*.rb')) do |c|
+        Rails.configuration.cache_classes ? require(c) : load(c)
       end
     end
 
