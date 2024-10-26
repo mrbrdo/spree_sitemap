@@ -6,14 +6,15 @@ class SitemapJob < ApplicationJob
       if store.respond_to?(:formatted_host)
         host = store.formatted_host
       else
-        if store.url.blank?
-          host = nil
-        else
-          host = begin
+        host = nil
+        if store.url.present?
+          begin
             uri = URI(store.formatted_url)
-            "#{uri.scheme}://#{uri.host}"
+            host = "#{uri.scheme}://#{uri.host}"
+            unless uri.port.in?([80, 443])
+              host += ":#{uri.port}"
+            end
           rescue
-            nil
           end
         end
       end
