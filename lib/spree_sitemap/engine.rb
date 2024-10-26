@@ -15,9 +15,9 @@ module SpreeSitemap
       end
 
       require 'spree_sitemap/spree_defaults'
-      SitemapGenerator::Interpreter.send :include, SpreeSitemap::SpreeDefaults
+      SitemapGenerator::Interpreter.send :prepend, SpreeSitemap::SpreeDefaults
       if defined? SitemapGenerator::LinkSet
-        SitemapGenerator::LinkSet.send :include, SpreeSitemap::SpreeDefaults
+        SitemapGenerator::LinkSet.send :prepend, SpreeSitemap::SpreeDefaults
       end
 
       Dir.glob(File.join(File.dirname(__FILE__), '../../app/**/*_decorator*.rb')) do |c|
