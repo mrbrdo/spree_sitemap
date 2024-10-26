@@ -9,30 +9,39 @@ module SpreeSitemap::SpreeDefaults
     { host: SitemapGenerator::Sitemap.default_host }
   end
 
+  def store_locales
+    @@store_locales ||= Spree::Store.first.supported_locales_list
+  end
+
+  def path_with_host(path)
+    return default_url_options[:host] if path.blank?
+    default_url_options[:host].to_s.sub(/\/$/, '') + '/' + path.gsub(/\A\//, '')
+  end
+
   def add_login(options = {})
-    add(login_path, options)
+    add(login_path(locale: Mobility.locale), options)
   end
 
   def add_signup(options = {})
-    add(signup_path, options)
+    add(signup_path(locale: Mobility.locale), options)
   end
 
   def add_account(options = {})
-    add(account_path, options)
+    add(account_path(locale: Mobility.locale), options)
   end
 
   def add_password_reset(options = {})
-    add(new_spree_user_password_path, options)
+    add(new_spree_user_password_path(locale: Mobility.locale), options)
   end
 
   def add_products(options = {})
     begin
-      active_products = Spree::Product.select(:id, :slug, :updated_at).active.distinct
+      active_products = Spree::Product.includes(:translations).select(:id, :slug, :updated_at).active.distinct
 
       @@product_idx ||= 1
       @@cur_product_id ||= 1
       if @@cur_product_id <= 1
-        add(products_path, options.merge(lastmod: active_products.last_updated))
+        add(products_path(locale: Mobility.locale), options.merge(lastmod: active_products.last_updated))
       end
 
       active_products.find_in_batches(batch_size: 2500, start: @@cur_product_id) do |products|
@@ -66,7 +75,17 @@ module SpreeSitemap::SpreeDefaults
       opts.merge!(video: [video_options(primary_video.youtube_ref, product)])
     end
 
-    add(product_path(product), opts)
+    if store_locales.size > 1
+      opts.merge!(
+        alternates: store_locales.map do |locale|
+          Mobility.with_locale(locale) do
+            { href: path_with_host(product_path(product, locale: locale)), lang: locale }
+          end
+        end
+      )
+    end
+
+    add(product_path(product, locale: Mobility.locale), opts)
   end
 
   def add_pages(options = {})
@@ -82,15 +101,26 @@ module SpreeSitemap::SpreeDefaults
   end
 
   def add_taxons(options = {})
-    Spree::Taxon.roots.each { |taxon| add_taxon(taxon, options) }
+    Spree::Taxon.includes(:translations).roots.each { |taxon| add_taxon(taxon, options) }
   end
 
   def add_taxon(taxon, options = {})
     taxon.self_and_descendants.each do |t|
-      add(nested_taxons_path(t.permalink), options.merge(lastmod: t.updated_at)) if taxon.permalink.present?
+      next unless t.permalink.present?
+      opts = { lastmod: t.updated_at }
+
+      if store_locales.size > 1
+        opts.merge!(
+          alternates: store_locales.map do |locale|
+            Mobility.with_locale(locale) do
+              { href: path_with_host(nested_taxons_path(t, locale: locale)), lang: locale }
+            end
+          end
+        )
+      end
+
+      add(nested_taxons_path(t, locale: Mobility.locale), opts)
     end
-    # add(nested_taxons_path(taxon.permalink), options.merge(lastmod: taxon.products.last_updated)) if taxon.permalink.present?
-    # taxon.children.each { |child| add_taxon(child, options) }
   end
 
   def gem_available?(name)
